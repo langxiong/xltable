@@ -2,56 +2,73 @@ var data = [
     [
         {
             "pos": "0,0,1,1",
-            "html": "<td>1</td>"
+            "text": "1"
         },
         {
             "pos": "1,0,2,1",
-            "html": "<td colspan=\"2\">2 & 3</td>"
+            "text": "2 & 3"
         },
         {
             "pos": "3,0,1,1",
-            "html": "<td>4</td>"
+            "text": "4"
         }
     ],
     [
         {
             "pos": "0,1,1,3",
-            "html": "<td rowspan=\"3\">5, 9, 13</td>"
+            "text": "5, 9, 13"
         },
         {
             "pos": "1,1,1,1",
-            "html": "<td>6</td>"
+            "text": "6"
         },
         {
-            "pos": "2,1,1,1",
-            "html": "<td>7</td>"
+            "pos": "2,1,1,2",
+            "text": "7, 11"
         },
         {
             "pos": "3,1,1,1",
-            "html": "<td>8</td>"
+            "text": "8"
         }
     ],
     [
         {
             "pos": "1,2,1,1",
-            "html": "<td>10</td>"
-        },
-        {
-            "pos": "2,2,1,1",
-            "html": "<td>11</td>"
+            "text": "10"
         },
         {
             "pos": "3,2,1,1",
-            "html": "<td>12</td>"
+            "text": "12"
         }
     ],
     [
         {
             "pos": "1,3,3,1",
-            "html": "<td colspan=\"3\">14, 15, 16</td>"
+            "text": "14, 15, 16"
         }
     ],
 ]
+
+function formatHtml(colObj) {
+    var tmp = colObj.pos.split(",");
+    var tmpHtml = "<td";
+    if (tmp[2] != "1") {
+        tmpHtml += " colspan=\"";
+        tmpHtml += tmp[2];
+        tmpHtml += "\"";
+    }
+
+    if (tmp[3] != "1") {
+        tmpHtml += " rowspan=\"";
+        tmpHtml += tmp[3];
+        tmpHtml += "\"";
+    }
+
+    tmpHtml += ">";
+    tmpHtml += colObj.text;
+    tmpHtml += "</td>";
+    return tmpHtml;
+}
 
 var tbId = document.getElementById('tb');
 var tmpHtml = '';
@@ -59,7 +76,7 @@ var tmpHtml = '';
 data.forEach(function (row) {
     tmpHtml += "<tr>";
     row.forEach(function (col) {
-        tmpHtml += col.html;
+        tmpHtml += formatHtml(col);
     })
     tmpHtml += "</tr>";
 });
