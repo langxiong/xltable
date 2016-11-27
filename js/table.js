@@ -16,117 +16,156 @@
 //     ],
 // ]
 
-function XLTable(nRow, nCol) {
-    this._cells = [];
-    this._nRow = nRow > 1 ? nRow : 1;
-    this._nCol = nCol > 1 ? nCol : 1;
+var data = [
+    {                        
+        "k00": "v00", 
+        "k01": ["v01-0", "v01-1"], // keys span + array.length. 
+        "k02": {"k02-0": "v02-0", "k02-01": "v02-1"},
+        "k03": {"k03-0": ["v03-0", "v03-1"]}
+    },
+    {                        
+        "k00": "v10", 
+        "k01": ["v11-0", "v11-1"], 
+        "k02": {"k12-0": "v12-0", "k12-01": "v12-1"},
+        "k03": {"k13-0": ["v13-0", "v13-1"]}
+    },
+]
 
-XLTable.prototype.reset = function() {
-    this._cells = [];
-    this.reset();
-};
-
-XLTable.prototype.reset = function() {
-    this._cells = [];
-
-    for (var r = 0; r < this._nRow; ++r) {
-        var tmpRow = [];
-        for (var c = 0; c < this._nCol; ++c) {
-            var id = r * this._nCol + c;
-            tmpRow.push({
-                _id: id,
-                _followId: id,
-                rowspan: 1,
-                colspan: 1,
-                _debugText: id.toString()
-            });
-        }
-        this._cells.push(tmpRow);
+function XLNewTable(data) {
+    if (!(this instanceof XLNewTable)) {
+        return new XLNewTable(data);
     }
-};
-
-XLTable.prototype.addRow = function() {
-    var tmpRow = [];
-    for (var c = 0; c < this._nCol; ++c) {
-        var id = (this._nRow) * this._nCol + c
-        tmpRow.push({
-            _id: id,
-            _debugText: id.toString()
-        });
-    }
-    this._cells.push(tmpRow);
-    this._nRow++;
-};
-
-XLTable.prototype.removeRow = function() {
-    this._cells.pop();
-    this._nRow--;
-};
-
-XLTable.prototype.addCol = function() {
-    this._nCol++;
-    this.reset();
-};
-
-XLTable.prototype.removeCol = function() {
-    this._nCol--;
-    this.reset();
-};
-
-XLTable.prototype.mergeCells = function(cellIds) {
-    // 
-    if (!Array.isArray(cellIds) || cellIds.length < 2) {
+    if (!Array.isArray(data) || data.length < 1) {
         return;
     }
 
-    cellIds.sort(function(lhs, rhs) {
-        return lhs - rhs;
+    this._nInitRow = data.length;
+
+    this._data = [];
+    this._cachedKeys = [];
+    this._firstRow = [];
+
+    var xlTable = this;
+    // parse main rows.
+    data.forEach(function (row) {
+        xlTable._parseRow(row);
     });
+};
 
-    var leaderCellId = cellIds[0];
-    var r0 = Math.floor(leaderCellId / this._nCol);
-    var c0 = leaderCellId % this._nCol;
+function XLCol(strInitText) {
+    if (!(this instanceof XLCol)) {
+        return new XLCol(strInitText);
+    }
+    this.text = strInitText;
+    this.rowspan = 0;
+    this.colspan = 0;
+}
 
-    var endCellId = cellIds[cellIds.length - 1];
-    var rE = Math.floor(endCellId / this._nCol);
-    var cE = endCellId % this._nCol;
+function XLSubObjCol(strInitText) {
+    if (!(this instanceof XLSubObjCol)) {
+        return new XLSubObjCol(strInitText);
+    };
 
-    for (var r = r0; r <= rE; ++r) {
-        for (var c = c0; c <= cE; ++c) {
-            this._cells[r][c]._followId = leaderCellId;
+    this.text = strInitText;
+    this.rowspan = 0;
+    this.colspan = 0;
+}
+
+
+XLNewTable.prototype._parseRow = function(row) {
+    // keys
+    var tmpKeys = Object.keys(row);
+    
+    if (!_.isEqual(tmpKeys, this._cachedKeys)) {
+        this._cachedKeys = tmpKeys;
+
+        for (var i = 0; i < tmpKeys.length; ++i) {
+            this._firstRow.push(XLCol(tmpKeys[i]));
+        }
+        this._data.push(this._firstRow);
+    };
+
+    var tmpRow = [];
+    var subObjRow = [];
+    var nRowSpan = 0;
+    for (var i = 0; i < tmpKeys.length; ++i) {
+        var tmpV = row[tmpKeys[i]];
+        if (typeof tmpV === 'string') {
+            tmpRow.push(XLCol(tmpV));
+        } 
+        else if (Array.isArray(tmpV)) {
+            if (tmpV.length === 0) {
+                tmpRow.push(XLCol(''));
+            } else {
+                // add firstRows span.
+                this._firstRow[i].rowspan = this._firstRow[i].rowspan < tmpV.length ? 
+                    tmpV.length : this._firstRow[i].rowspan;
+                for (var j = 0; j < tmpV.length; ++j) {
+                    tmpRow.push(XLCol(tmpV[j]));
+                }
+            }
+        }
+        else if (typeof tmpV === 'object') {
+            nRowSpan = 1;
+
+            var nSubObjColSpan = 0;
+            for (var k in tmpV) {
+                var subObjCol = XLSubObjCol(k);
+                var subObjVal = tmpV[k];
+                if (typeof subObjVal === 'string') {
+                    subObjRow.push(XLCol(tmpV[k]));
+                    nSubObjColSpan += 1;
+                } 
+                else if (Array.isArray(subObjVal)) {
+                    nSubObjColSpan += subObjVal.length;
+                    subObjCol.colspan = subObjVal.length;
+                    
+                    for (var j = 0; j < subObjVal.length; ++j) {
+                        subObjRow.push(XLCol(subObjVal[j]));
+                    }
+                }
+                tmpRow.push(subObjCol);
+            }
+
+            // add firstRows span.
+            this._firstRow[i].rowspan = this._firstRow[i].rowspan < nSubObjColSpan ? 
+                nSubObjColSpan : this._firstRow[i].rowspan;
+
         }
     }
 
-    this._cells[r0][c0].rowspan = rE - r0 + 1;
-    this._cells[r0][c0].colspan = cE - c0 + 1;
+    for (var i = 0; i < tmpRow.length; ++i) {
+        if (tmpRow[i] instanceof XLCol) {
+            tmpRow[i].nRowSpan = nRowSpan;
+        }
+    }
+
+    this._data.push(this._firstRow);
+    if (subObjRow.length !== 0) {
+        this._data.push(this.subObjRow);
+    }
 };
 
-XLTable.prototype.fillData = function(data) {
-
-};
-
-XLTable.prototype.renderHtml = function() {
+XLNewTable.prototype.renderHtml = function() {
     var html = '<table border=\"1\"><tbody>';
 
-    this._cells.forEach(function(row) {
+    this._data.forEach(function(row) {
         html += '<tr>';
         row.forEach(function(col) {
-            if (col._followId === col._id) {
-                html += '<td';
-                if (col.rowspan > 1) {
-                    html += ' rowspan=\"';
-                    html += col.rowspan.toString();
-                    html += "\"";
-                }
-                if (col.colspan > 1) {
-                    html += ' colspan=\"';
-                    html += col.colspan.toString();
-                    html += "\"";
-                }
-                html += ">";
-                html += col._debugText;
-                html += "</td>"
+            html += '<td';
+            if (col.rowspan !== 0) {
+                html += ' rowspan=\"';
+                html += col.rowspan.toString();
+                html += '\"';
             }
+            if (col.colspan !== 0) {
+                html += ' colspan=\"';
+                html += col.colspan.toString();
+                html += '\"';
+            }
+            html += '>';
+            html += col.text;
+            html += '</td>';
         });
         html += '</tr>';
     });
@@ -135,13 +174,9 @@ XLTable.prototype.renderHtml = function() {
     return html;
 };
 
+var newTable = XLNewTable(data);
 
-var myTable = new XLTable(15, 30);
-
-myTable.mergeCells([
-    0, 449
-]);
-document.write(myTable.renderHtml());
+document.write(newTable.renderHtml());
 
 // var tbId = document.getElementById('tb');
 // var tmpHtml = '';
