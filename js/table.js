@@ -4,7 +4,7 @@ var data = [
     {                        
         "k00": "v00", 
         "k01": ["v01-00", "v01-01"], 
-        "k02": ["v02-00", "v02-01", "v03-01"], 
+        "k02": ["v02-00", "v02-01", "v02-02"], 
         "k03": {"k03-00": "v03-00", "k03-01": "v03-01"},
         "k04": {"k04-00": "v04-00", "k04-01": "v04-01" , "k04-02": "v04-02"},
         "k05": {"k05-00": ["v05-00", "v05-01", "v05-02"]}
@@ -12,7 +12,7 @@ var data = [
     {                        
         "k00": "v10", 
         "k01": ["v11-00", "v11-01"], 
-        "k02": ["v12-00", "v12-01", "v13-01"], 
+        "k02": ["v12-00", "v12-01", "v12-02"], 
         "k03": {"k13-00": "v13-00", "k13-01": "v13-01"},
         "k04": {"k14-00": "v14-00", "k14-01": "v14-01", "k14-02": "v14-02"},
         "k05": {"k15-00": ["v15-00", "v15-01", "v15-02"]}
@@ -76,62 +76,72 @@ function XLTd(text, XLSpan) {
     this.colspan = XLSpan.nCol;
 }
 
-function XLRowCol(v, rows) {
-    var rIndex = rows.length - 1;
+function XLRowCol(v, rows, rIndex, nRowSpan, nColSpan) {
 
-    function updateRowSpan(rows, nRowIndex, nRowSpan) {
-        for (var i = 0; i < rows[nRowIndex].length; ++i) {
-            rows[nRowIndex][i].rowspan = nRowSpan + 1 - rows[nRowIndex][i].rowspan;
+    function updateRowSpan(rows, nRowIndex, nLen, nIncRowSpan) {
+        for (var i = 0; i < nLen; ++i) {
+            rows[nRowIndex][i].rowspan += nIncRowSpan;
         }
     }
 
     if (typeof v === 'string') {
-        var r = XLSpan(1, 1);
+        var r = XLSpan(nRowSpan, 1);
         rows[rIndex].push(XLTd(v, r));
         return r;
     }
 
     if (Array.isArray(v)) {
         if (v.length === 0) {
-            var r = XLSpan(1, 1);
+            var r = XLSpan(nRowSpan, 1);
             rows[rIndex].push(XLTd('', r));
             return r;
         }
 
-        var r = XLSpan(0, 0);
+        var r = XLSpan(nRowSpan, 0);
+        var nIncRowSpan = 0;
         for (var i = 0; i < v.length; ++i) {
-            var tmp = XLRowCol(v[i], rows);
-            r.nRow = r.nRow > tmp.nRow ? r.nRow : tmp.nRow;
+            var nLenBefore = rows[rIndex].length;
+            var tmp = XLRowCol(v[i], rows, rIndex, r.nRow, r.nCol);
+            var nLenAfter = rows[rIndex].length;
+
+            if (r.nRow < tmp.nRow) {
+                // nIncRowSpan = tmp.nRow - r.nRow;
+                // updateRowSpan(rows, rIndex, nLenBefore, nIncRowSpan);
+                r.nRow = tmp.nRow;
+            }
+
             r.nCol += tmp.nCol;
         }
-
-        updateRowSpan(rows, rIndex, r.nRow);
-
         return r;
     }
 
     if (typeof v === 'object') {
         var keys = Object.keys(v);
         if (keys.length === 0) {
-            var r = XLSpan(1, 1);
+            var r = XLSpan(nRowSpan, 1);
             rows[rIndex].push(XLTd('', r));
             return r;
         }
 
-        var r = XLSpan(0, 0);
+        var r = XLSpan(1, 0);
         rows.push(new Array());
         for (var i = 0; i < keys.length; ++i) {
             var k = keys[i];
-            var tmp = XLRowCol(v[k], rows);
+            
+            var nLenBefore = rows[rIndex].length;
+            var tmp = XLRowCol(v[k], rows, rIndex + 1, r.nRow, r.nCol);
+            var nLenAfter = rows[rIndex].length;
 
-            r.nRow = r.nRow > tmp.nRow ? r.nRow : tmp.nRow;
+            if (r.nRow < tmp.nRow) {
+                // nIncRowSpan = tmp.nRow - r.nRow;
+                // updateRowSpan(rows, rIndex, nLenBefore, nIncRowSpan);
+                r.nRow = tmp.nRow;
+            }
+
             r.nCol += tmp.nCol;
-
             rows[rIndex].push(XLTd(k, tmp));
         }
         r.nRow += 1;
-
-        updateRowSpan(rows, rIndex, r.nRow);
         return r;
     }
 
@@ -139,7 +149,6 @@ function XLRowCol(v, rows) {
     rows[rIndex].push(XLTd(v.toString(), r));
     return r;
 }
-
 
 XLNewTable.prototype._parseRow = function(row) {
     // keys
@@ -150,9 +159,10 @@ XLNewTable.prototype._parseRow = function(row) {
 
     var tmpFirstRow = [];
 
+    var nDepth = getDepth(row);
     for (var i = 0; i < tmpKeys.length; ++i) {
         var k = tmpKeys[i];
-        var r = XLRowCol(row[k], this._rows);
+        var r = XLRowCol(row[k], this._rows, 0, nDepth);
         r.nRow = 1;
         tmpFirstRow.push(XLTd(k, r));
     }
@@ -165,8 +175,46 @@ XLNewTable.prototype._parseRow = function(row) {
     for (var i = 0; i < this._rows.length; ++i) {
         this._data.push(this._rows[i]);
     }
-
 };
+
+function getDepth(obj) {
+    var nDepth = 1;
+    if (typeof obj === 'string') {
+        return nDepth;
+    }
+
+    if (Array.isArray(obj)) {
+        if (obj.length === 0) {
+            return nDepth;
+        }
+
+        var nObjDepth = 0;
+        for (var i = 0; i < obj.length; ++i) {
+            var nTmpDepth = getDepth(obj[k]);
+
+            nObjDepth = nTmpDepth > nObjDepth ? nTmpDepth : nObjDepth;
+        }
+        nDepth += nObjDepth;
+        return nDepth;
+    }
+
+    if (typeof obj === 'object') {
+        if (obj.length === 0) {
+            return nDepth;
+        }
+
+        var nObjDepth = 0;
+        for (var k in obj) {
+            var nTmpDepth = getDepth(obj[k]);
+
+            nObjDepth = nTmpDepth > nObjDepth ? nTmpDepth : nObjDepth;
+        }
+        nDepth += nObjDepth;
+        return nDepth;
+    }
+
+    return nDepth;
+}
 
 XLNewTable.prototype.renderHtml = function() {
     var html = '<table border=\"1\"><tbody>';
