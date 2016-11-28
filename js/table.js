@@ -1,21 +1,3 @@
-// var data = [
-//     [
-//         {
-//             "courseName": 　"语文",
-//             "class": [
-//                 {
-//                     "className": "一班",
-//                     "scores": {
-//                         "midtermScore": ,
-//                         "finalScore": 
-//                     }
-//                 }
-
-//             ]
-//         }
-//     ],
-// ]
-
 var data = [
     {                        
         "k00": "v00000000000000000000000000", 
@@ -183,16 +165,3 @@ XLNewTable.prototype.renderHtml = function() {
 var newTable = XLNewTable(data);
 
 document.write(newTable.renderHtml());
-
-// var tbId = document.getElementById('tb');
-// var tmpHtml = '';
-
-// data.forEach(function(row) {
-//     tmpHtml += "<tr>";
-//     row.forEach(function(col) {
-//         tmpHtml += formatHtml(col);
-//     })
-//     tmpHtml += "</tr>";
-// });
-
-// tbId.insertAdjacentHTML('beforeend', tmpHtml);
