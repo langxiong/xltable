@@ -35,6 +35,31 @@ var data = [
         "k11": { "k05-00": ["v05-00", "v05-01", "v05-02"] },
         "k12": { "k06-00": { "k06-10": { "k06-20": "v06-20" } } },
     },
+    {
+        "中文纷纷": {
+            "左": [
+                "天之道",
+                "损有余而补不足",
+                {
+                    "人之道":
+                    {
+                        "则不然": "损不足以奉有余"
+                    },
+                    "孰能有余以奉天下": "唯有道者。 出自哪里"
+                }
+            ],
+            "右": {
+                "天上第一": {
+                    "有容乃大": "受益惟谦，有容乃大"
+                },
+                "地上第二": {
+                    "人": false,
+                    "鸟": 1,
+                    "大将": null
+                }
+            }
+        }
+    }
 ]
 
 function XLNewTable(data) {
@@ -104,6 +129,12 @@ function XLRowCol(v, rows, rIndex, nRowSpan, nColSpan) {
     }
 
     if (typeof v === 'object') {
+        if (!v) {
+            var r = XLSpan(nRowSpan, 1);
+            rows[rIndex].push(XLTd('', r));
+            return r;
+        }
+
         var keys = Object.keys(v);
         if (keys.length === 0) {
             var r = XLSpan(nRowSpan, 1);
@@ -187,7 +218,7 @@ function getDepth(obj) {
     }
 
     if (typeof obj === 'object') {
-        if (obj.length === 0) {
+        if (!obj) {
             return nDepth;
         }
 
