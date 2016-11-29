@@ -1,3 +1,14 @@
+/*!
+ * XLTable.js
+ *
+ * @brief
+ * XLTable is a table creator with json data specified.
+ * Copyright (c) 2016-2017, https://github.com/langxiong/XLTable
+ *
+ * @author  xionglang x583194811l@gmail.com
+ * @date    2016-11-29
+ */
+
 (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
 		module.exports = factory();
