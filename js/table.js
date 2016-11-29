@@ -164,7 +164,7 @@ function XLRowCol(v, rows, rIndex, nRowSpan, nColSpan) {
         return r;
     }
 
-    var r = XLSpan(0, 0);
+    var r = XLSpan(nRowSpan, 1);
     rows[rIndex].push(XLTd(v.toString(), r));
     return r;
 }
