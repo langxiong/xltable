@@ -165,7 +165,7 @@
         var nDepth = XLGetDepth(row);
         for (var i = 0; i < tmpKeys.length; ++i) {
             var k = tmpKeys[i];
-            var r = XLRowCol(row[k], this._rows, 0, nDepth);
+            var r = XLRowCol(row[k], this._rows, 0, nDepth - 1);
             r.nRow = 1;
             tmpFirstRow.push(XLTd(k, r));
         }
