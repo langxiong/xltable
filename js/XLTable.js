@@ -51,6 +51,10 @@
             return new XLTd(text, XLSpan, isNeedMerge);
         }
 
+        var n = text.lastIndexOf("__");
+        if (n !== -1) {
+            text = text.slice(0, n);
+        }
         this.text = text;
         this.rowspan = XLSpan.nRow;
         this.colspan = XLSpan.nCol;
