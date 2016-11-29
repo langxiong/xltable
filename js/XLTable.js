@@ -10,15 +10,15 @@
  */
 
 (function webpackUniversalModuleDefinition(root, factory) {
-	if(typeof exports === 'object' && typeof module === 'object')
-		module.exports = factory();
-	else if(typeof define === 'function' && define.amd)
-		define([], factory);
-	else if(typeof exports === 'object')
-		exports["XLTable"] = factory();
-	else
-		root["XLTable"] = factory();
-})(this, function() {
+    if (typeof exports === 'object' && typeof module === 'object')
+        module.exports = factory();
+    else if (typeof define === 'function' && define.amd)
+        define([], factory);
+    else if (typeof exports === 'object')
+        exports["XLTable"] = factory();
+    else
+        root["XLTable"] = factory();
+})(this, function () {
     function XLTable(data) {
         if (!(this instanceof XLTable)) {
             return new XLTable(data);
@@ -46,14 +46,15 @@
         };
     }
 
-    function XLTd(text, XLSpan) {
+    function XLTd(text, XLSpan, isNeedMerge) {
         if (!(this instanceof XLTd)) {
-            return new XLTd(text, XLSpan);
+            return new XLTd(text, XLSpan, isNeedMerge);
         }
 
         this.text = text;
         this.rowspan = XLSpan.nRow;
         this.colspan = XLSpan.nCol;
+        this.isNeedMerge = isNeedMerge ? true : false;
     }
 
     function XLRowCol(v, rows, rIndex, nRowSpan) {
@@ -88,7 +89,7 @@
         if (typeof v === 'object') {
             if (!v) {
                 var r = XLSpan(nRowSpan, 1);
-                rows[rIndex].push(XLTd('', r));
+                rows[rIndex].push(XLTd('', r, true));
                 return r;
             }
 
@@ -137,13 +138,12 @@
                 return nDepth;
             }
 
-            var nObjDepth = 0;
+            nDepth = 0;
             for (var i = 0; i < obj.length; ++i) {
                 var nTmpDepth = XLGetDepth(obj[k]);
 
-                nObjDepth = nTmpDepth > nObjDepth ? nTmpDepth : nObjDepth;
+                nDepth = nTmpDepth > nDepth ? nTmpDepth : nDepth;
             }
-            nDepth += nObjDepth;
             return nDepth;
         }
 
@@ -164,6 +164,28 @@
 
         return nDepth;
     }
+
+    XLTable.prototype._isEqual = function(arrFirst, arrSecond) {
+        if (!Array.isArray(arrFirst) || !Array.isArray(arrSecond)) {
+            return false;
+        }
+
+        var firstLen = arrFirst.length;
+        var secondLen = arrSecond.length;
+
+        if (firstLen !== secondLen) {
+            return false;
+        }
+
+        for (var i = 0; i < firstLen; ++i) {
+            if (arrFirst[i].text !== arrSecond[i].text) {
+                return false;
+            }
+        }
+
+        return true;
+    };
+    
     XLTable.prototype._parseRow = function (row) {
         // keys
         var tmpKeys = Object.keys(row);
@@ -181,9 +203,20 @@
             tmpFirstRow.push(XLTd(k, r));
         }
 
-        if (!_.isEqual(tmpFirstRow, this._firstRow)) {
+        if (!this._isEqual(tmpFirstRow, this._firstRow)) {
             this._data.push(tmpFirstRow);
             this._firstRow = tmpFirstRow;
+        }
+
+        var rLen = this._rows.length;
+        for (var i = 0; i < rLen; ++i) {
+            var subRow = this._rows[i];
+            var rSubLen = subRow.length;
+            for (var j = rSubLen - 1; j > 0; --j) {
+                if (subRow[j].isNeedMerge) {
+                    subRow[j - 1].colspan += subRow[j].colspan;
+                }
+            }
         }
 
         for (var i = 0; i < this._rows.length; ++i) {
@@ -197,20 +230,22 @@
         this._data.forEach(function (row) {
             html += '<tr>';
             row.forEach(function (col) {
-                html += '<td';
-                if (col.rowspan > 1) {
-                    html += ' rowspan=\"';
-                    html += col.rowspan.toString();
-                    html += '\"';
+                if (!col.isNeedMerge) {
+                    html += '<td';
+                    if (col.rowspan > 1) {
+                        html += ' rowspan=\"';
+                        html += col.rowspan.toString();
+                        html += '\"';
+                    }
+                    if (col.colspan > 1) {
+                        html += ' colspan=\"';
+                        html += col.colspan.toString();
+                        html += '\"';
+                    }
+                    html += '>';
+                    html += col.text;
+                    html += '</td>';
                 }
-                if (col.colspan > 1) {
-                    html += ' colspan=\"';
-                    html += col.colspan.toString();
-                    html += '\"';
-                }
-                html += '>';
-                html += col.text;
-                html += '</td>';
             });
             html += '</tr>';
         });
@@ -225,20 +260,22 @@
         this._data.forEach(function (row) {
             html += '<tr>';
             row.forEach(function (col) {
-                html += '<td';
-                if (col.rowspan > 1) {
-                    html += ' rowspan=\"';
-                    html += col.rowspan.toString();
-                    html += '\"';
+                if (!col.isNeedMerge) {
+                    html += '<td';
+                    if (col.rowspan > 1) {
+                        html += ' rowspan=\"';
+                        html += col.rowspan.toString();
+                        html += '\"';
+                    }
+                    if (col.colspan > 1) {
+                        html += ' colspan=\"';
+                        html += col.colspan.toString();
+                        html += '\"';
+                    }
+                    html += '>';
+                    html += col.text;
+                    html += '</td>';
                 }
-                if (col.colspan > 1) {
-                    html += ' colspan=\"';
-                    html += col.colspan.toString();
-                    html += '\"';
-                }
-                html += '>';
-                html += col.text;
-                html += '</td>';
             });
             html += '</tr>';
         });
