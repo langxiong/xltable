@@ -7,7 +7,8 @@ var data = [
         "k02": ["v02-00", "v02-01", "v02-02"], 
         "k03": {"k03-00": "v03-00", "k03-01": "v03-01"},
         "k04": {"k04-00": "v04-00", "k04-01": "v04-01" , "k04-02": "v04-02"},
-        "k05": {"k05-00": ["v05-00", "v05-01", "v05-02"]}
+        "k05": {"k05-00": ["v05-00", "v05-01", "v05-02"]},
+        "k06": {"k06-00": {"k06-10": {"k06-20": "v06-20"}}},
     },
     {                        
         "k00": "v10", 
@@ -15,7 +16,8 @@ var data = [
         "k02": ["v12-00", "v12-01", "v12-02"], 
         "k03": {"k13-00": "v13-00", "k13-01": "v13-01"},
         "k04": {"k14-00": "v14-00", "k14-01": "v14-01", "k14-02": "v14-02"},
-        "k05": {"k15-00": ["v15-00", "v15-01", "v15-02"]}
+        "k05": {"k15-00": ["v15-00", "v15-01", "v15-02"]},
+        "k06": "v06",
     },
 ]
 
@@ -98,7 +100,6 @@ function XLRowCol(v, rows, rIndex, nRowSpan, nColSpan) {
         }
 
         var r = XLSpan(nRowSpan, 0);
-        var nIncRowSpan = 0;
         for (var i = 0; i < v.length; ++i) {
             var nLenBefore = rows[rIndex].length;
             var tmp = XLRowCol(v[i], rows, rIndex, r.nRow, r.nCol);
@@ -129,7 +130,7 @@ function XLRowCol(v, rows, rIndex, nRowSpan, nColSpan) {
             var k = keys[i];
             
             var nLenBefore = rows[rIndex].length;
-            var tmp = XLRowCol(v[k], rows, rIndex + 1, r.nRow, r.nCol);
+            var tmp = XLRowCol(v[k], rows, rIndex + 1, nRowSpan - 1, r.nCol);
             var nLenAfter = rows[rIndex].length;
 
             if (r.nRow < tmp.nRow) {
@@ -139,6 +140,8 @@ function XLRowCol(v, rows, rIndex, nRowSpan, nColSpan) {
             }
 
             r.nCol += tmp.nCol;
+            // keys always as one row
+            tmp.nRow = 1;
             rows[rIndex].push(XLTd(k, tmp));
         }
         r.nRow += 1;
