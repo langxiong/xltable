@@ -17,7 +17,7 @@ var data = [
                 }
             },
             "k08": { "k05-00": ["v05-00", "v05-01", "v05-02"] },
-            "k09": { "k06-00": { "k06-10": { "k06-20": "v06-20" } } },
+            "k09": { "k06-00": { "k06-10": { "k06-20": "v06-20" } } }
         }
     },
     {
@@ -33,7 +33,7 @@ var data = [
         "k09": { "k06-00": { "k06-10": { "k06-20": "v06-20" } } },
         "k10": { "k04-00": "v04-00", "k04-01": "v04-01", "k04-02": "v04-02" },
         "k11": { "k05-00": ["v05-00", "v05-01", "v05-02"] },
-        "k12": { "k06-00": { "k06-10": { "k06-20": "v06-20" } } },
+        "k12": { "k06-00": { "k06-10": { "k06-20": "v06-20" } } }
     },
     {
         "中文纷纷": {
@@ -85,3 +85,7 @@ var options = {
 
 var editor = new JSONEditor(container, options);
 editor.set(data);
+
+var newTable = new XLTable(data);
+tb.insertAdjacentHTML('beforeend', newTable.renderWithOutTableTag());
+newTable = null;
