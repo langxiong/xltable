@@ -1,23 +1,39 @@
 var data = [
     // array + colspan
     // object + rowspan
-    {                        
-        "k00": "v00", 
-        "k01": ["v01-00", "v01-01"], 
-        "k02": ["v02-00", "v02-01", "v02-02"], 
-        "k03": {"k03-00": "v03-00", "k03-01": "v03-01"},
-        "k04": {"k04-00": "v04-00", "k04-01": "v04-01" , "k04-02": "v04-02"},
-        "k05": {"k05-00": ["v05-00", "v05-01", "v05-02"]},
-        "k06": {"k06-00": {"k06-10": {"k06-20": "v06-20"}}},
+    {
+        "k00": "v00",
+        "k01": ["v01-00", "v01-01"],
+        "k02": ["v02-00", "v02-01", "v02-02"],
+        "k03": { "k03-00": "v03-00", "k03-01": "v03-01" },
+        "k04": { "k04-00": "v04-00", "k04-01": "v04-01", "k04-02": "v04-02" },
+        "k05": { "k05-00": ["v05-00", "v05-01", "v05-02"] },
+        "k06": { "k06-00": { "k06-10": { "k06-20": "v06-20" } } },
+        "k07": {
+            "k04-00": "v04-00", "k04-01": "v04-01", "k04-02": "v04-02", "ktttt": {
+                "k10": {
+                    "k04-00": "v04-00", "k04-01": "v04-01", "k04-02": "v04-02",
+                    "k20": { "k04-00": "v04-00", "k04-01": "v04-01", "k04-02": "v04-02" }
+                }
+            },
+            "k08": { "k05-00": ["v05-00", "v05-01", "v05-02"] },
+            "k09": { "k06-00": { "k06-10": { "k06-20": "v06-20" } } },
+        }
     },
-    {                        
-        "k00": "v10", 
-        "k01": ["v11-00", "v11-01"], 
-        "k02": ["v12-00", "v12-01", "v12-02"], 
-        "k03": {"k13-00": "v13-00", "k13-01": "v13-01"},
-        "k04": {"k14-00": "v14-00", "k14-01": "v14-01", "k14-02": "v14-02"},
-        "k05": {"k15-00": ["v15-00", "v15-01", "v15-02"]},
+    {
+        "k00": "v10",
+        "k01": ["v11-00", "v11-01"],
+        "k02": ["v12-00", "v12-01", "v12-02"],
+        "k03": { "k13-00": "v13-00", "k13-01": "v13-01" },
+        "k04": { "k14-00": "v14-00", "k14-01": "v14-01", "k14-02": "v14-02" },
+        "k05": { "k15-00": ["v15-00", "v15-01", "v15-02"] },
         "k06": "v06",
+        "k07": { "k04-00": "v04-00", "k04-01": "v04-01", "k04-02": "v04-02" },
+        "k08": { "k05-00": ["v05-00", "v05-01", "v05-02"] },
+        "k09": { "k06-00": { "k06-10": { "k06-20": "v06-20" } } },
+        "k10": { "k04-00": "v04-00", "k04-01": "v04-01", "k04-02": "v04-02" },
+        "k11": { "k05-00": ["v05-00", "v05-01", "v05-02"] },
+        "k12": { "k06-00": { "k06-10": { "k06-20": "v06-20" } } },
     },
 ]
 
@@ -36,30 +52,10 @@ function XLNewTable(data) {
 
     var xlTable = this;
     // parse main rows.
-    data.forEach(function (row) {
+    data.forEach(function(row) {
         xlTable._parseRow(row);
     });
 };
-
-function XLCol(strInitText) {
-    if (!(this instanceof XLCol)) {
-        return new XLCol(strInitText);
-    }
-    this.text = strInitText;
-    this.rowspan = 0;
-    this.colspan = 0;
-}
-
-function XLSubObjCol(strInitText) {
-    if (!(this instanceof XLSubObjCol)) {
-        return new XLSubObjCol(strInitText);
-    };
-
-    this.text = strInitText;
-    this.rowspan = 0;
-    this.colspan = 0;
-}
-
 
 function XLSpan(nRow, nCol) {
     return {
@@ -79,13 +75,6 @@ function XLTd(text, XLSpan) {
 }
 
 function XLRowCol(v, rows, rIndex, nRowSpan, nColSpan) {
-
-    function updateRowSpan(rows, nRowIndex, nLen, nIncRowSpan) {
-        for (var i = 0; i < nLen; ++i) {
-            rows[nRowIndex][i].rowspan += nIncRowSpan;
-        }
-    }
-
     if (typeof v === 'string') {
         var r = XLSpan(nRowSpan, 1);
         rows[rIndex].push(XLTd(v, r));
@@ -106,8 +95,6 @@ function XLRowCol(v, rows, rIndex, nRowSpan, nColSpan) {
             var nLenAfter = rows[rIndex].length;
 
             if (r.nRow < tmp.nRow) {
-                // nIncRowSpan = tmp.nRow - r.nRow;
-                // updateRowSpan(rows, rIndex, nLenBefore, nIncRowSpan);
                 r.nRow = tmp.nRow;
             }
 
@@ -128,14 +115,12 @@ function XLRowCol(v, rows, rIndex, nRowSpan, nColSpan) {
         rows.push(new Array());
         for (var i = 0; i < keys.length; ++i) {
             var k = keys[i];
-            
+
             var nLenBefore = rows[rIndex].length;
             var tmp = XLRowCol(v[k], rows, rIndex + 1, nRowSpan - 1, r.nCol);
             var nLenAfter = rows[rIndex].length;
 
             if (r.nRow < tmp.nRow) {
-                // nIncRowSpan = tmp.nRow - r.nRow;
-                // updateRowSpan(rows, rIndex, nLenBefore, nIncRowSpan);
                 r.nRow = tmp.nRow;
             }
 
@@ -156,7 +141,7 @@ function XLRowCol(v, rows, rIndex, nRowSpan, nColSpan) {
 XLNewTable.prototype._parseRow = function(row) {
     // keys
     var tmpKeys = Object.keys(row);
-    
+
     this._rows = [];
     this._rows.push(new Array());
 
